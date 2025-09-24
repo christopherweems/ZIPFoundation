@@ -12,6 +12,8 @@ import Foundation
 
 #if canImport(zlib)
 import zlib
+#elseif canImport(CZLib)
+import CZLib
 #endif
 
 /// The compression method of an `Entry` in a ZIP `Archive`.
@@ -69,8 +71,10 @@ extension Data {
         #if os(macOS) || os(iOS) || os(tvOS) || os(visionOS) || os(watchOS)
         return try self.process(operation: COMPRESSION_STREAM_ENCODE, size: size, bufferSize: bufferSize,
                                 provider: provider, consumer: consumer)
-        #else
+        #elseif canImport(CZLib)
         return try self.encode(size: size, bufferSize: bufferSize, provider: provider, consumer: consumer)
+        #else
+        fatalError("Missing encoder implementation")
         #endif
     }
 
@@ -87,8 +91,10 @@ extension Data {
         #if os(macOS) || os(iOS) || os(tvOS) || os(visionOS) || os(watchOS)
         return try self.process(operation: COMPRESSION_STREAM_DECODE, size: size, bufferSize: bufferSize,
                                 skipCRC32: skipCRC32, provider: provider, consumer: consumer)
-        #else
+        #elseif canImport(CZLib)
         return try self.decode(bufferSize: bufferSize, skipCRC32: skipCRC32, provider: provider, consumer: consumer)
+        #else
+        fatalError("Missing decoder implementationa")
         #endif
     }
 }
@@ -162,9 +168,7 @@ private extension compression_stream {
 
 // MARK: - Linux
 
-#else
-import CZlib
-
+#elseif canImport(CZLib)
 extension Data {
     static func encode(size: Int64, bufferSize: Int, provider: Provider, consumer: Consumer) throws -> CRC32 {
         var stream = z_stream()
